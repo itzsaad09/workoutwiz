@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:workoutwiz/models/user_profile.dart';
@@ -29,58 +30,86 @@ class WorkoutWizApp extends StatelessWidget {
     final themeService = Provider.of<ThemeService>(context);
     final profileProvider = Provider.of<UserProfileProvider>(context);
 
-    // Premium Midnight Glass Dark Theme
+    // Elegant Crystal Slate Dark Theme
     final darkTheme = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF00E5FF),
+        seedColor: const Color(0xFF00B4D8),
         brightness: Brightness.dark,
-        surface: const Color(0xFF0F172A),
+        surface: const Color(0xFF0D1117),
         onSurface: Colors.white,
+        primary: const Color(0xFF00B4D8),
+        secondary: const Color(0xFFFF9F1C),
       ),
-      scaffoldBackgroundColor: const Color(0xFF020617),
+      scaffoldBackgroundColor: const Color(0xFF0B1121),
       cardTheme: CardThemeData(
-        color: const Color(0xFF1E293B).withValues(alpha: 0.7),
+        color: const Color(0xFF161B22).withValues(alpha: 0.8),
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: Colors.white.withValues(alpha: 0.05),
+            width: 0.5,
+          ),
+        ),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(color: Colors.white70),
+        systemOverlayStyle:
+            SystemUiOverlayStyle.light, // White icons for dark background
         titleTextStyle: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
+          fontSize: 20,
+          fontWeight: FontWeight.w300,
           color: Colors.white,
+          letterSpacing: 2,
         ),
       ),
     );
 
-    // Premium Crystal Glass Light Theme
+    // Elegant Professional Light Theme (Refined for visibility)
     final lightTheme = ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF6366F1),
+        seedColor: const Color(0xFF0077B6),
         brightness: Brightness.light,
-        surface: Colors.white.withValues(alpha: 0.9),
+        surface: Colors.white,
+        onSurface: const Color(
+          0xFF0F172A,
+        ), // Darker slate for better text contrast
+        primary: const Color(0xFF0077B6),
+        secondary: const Color(
+          0xFFE36414,
+        ), // More energetic but professional orange
       ),
-      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+      scaffoldBackgroundColor: const Color(
+        0xFFF1F5F9,
+      ), // Slightly darker gray for better surface contrast
       cardTheme: CardThemeData(
-        color: Colors.white.withValues(alpha: 0.8),
-        elevation: 5,
-        shadowColor: Colors.black12,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        color: Colors.white,
+        elevation: 2,
+        shadowColor: const Color(0xFF0F172A).withValues(alpha: 0.08),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+        ),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(color: Color(0xFF0F172A)),
+        systemOverlayStyle:
+            SystemUiOverlayStyle.dark, // Dark icons for light background
         titleTextStyle: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF1E293B),
+          fontSize: 20,
+          fontWeight: FontWeight.w300,
+          color: Color(0xFF0F172A),
+          letterSpacing: 2,
         ),
       ),
     );

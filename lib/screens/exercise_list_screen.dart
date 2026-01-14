@@ -23,10 +23,7 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
   }
 
   String _formatTitle(String text) {
-    return text
-        .split(' ')
-        .map((word) => word[0].toUpperCase() + word.substring(1))
-        .join(' ');
+    return text.toUpperCase();
   }
 
   @override
@@ -35,51 +32,52 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text('$title Exercises'),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 4,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
         backgroundColor: Colors.transparent,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         flexibleSpace: ClipRect(
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(color: Colors.transparent),
           ),
         ),
       ),
       body: Stack(
         children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: Theme.of(context).brightness == Brightness.dark
-                    ? [const Color(0xFF020617), const Color(0xFF0F172A)]
-                    : [const Color(0xFFF8FAFC), const Color(0xFFE2E8F0)],
-              ),
-            ),
+          Positioned.fill(
+            child: Container(color: Theme.of(context).scaffoldBackgroundColor),
           ),
           FutureBuilder<List<Exercise>>(
             future: _exercisesFuture,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                );
               } else if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text('No exercises found.'));
+                return const Center(child: Text('LOAD ERROR'));
               }
 
-              final exercises = snapshot.data!;
+              final exercises = snapshot.data ?? [];
               return ListView.builder(
                 padding: EdgeInsets.fromLTRB(
-                  20,
-                  MediaQuery.of(context).padding.top + 70,
-                  20,
-                  20,
+                  24,
+                  MediaQuery.of(context).padding.top + 80,
+                  24,
+                  24,
                 ),
                 itemCount: exercises.length,
                 itemBuilder: (context, index) {
                   final exercise = exercises[index];
-                  return _ExerciseGlassCard(exercise: exercise);
+                  return _ExerciseProfessionalCard(exercise: exercise);
                 },
               );
             },
@@ -90,188 +88,192 @@ class _ExerciseListScreenState extends State<ExerciseListScreen> {
   }
 }
 
-class _ExerciseGlassCard extends StatelessWidget {
+class _ExerciseProfessionalCard extends StatelessWidget {
   final Exercise exercise;
 
-  const _ExerciseGlassCard({required this.exercise});
+  const _ExerciseProfessionalCard({required this.exercise});
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.only(bottom: 24),
+      margin: const EdgeInsets.only(bottom: 32),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.05),
+          width: 0.5,
+        ),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (exercise.gifUrl.isNotEmpty)
-              Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (exercise.gifUrl.isNotEmpty)
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+              child: Stack(
                 children: [
                   Image.network(
                     exercise.gifUrl,
-                    height: 250,
+                    height: 240,
                     width: double.infinity,
                     fit: BoxFit.cover,
                     loadingBuilder: (context, child, loadingProgress) {
                       if (loadingProgress == null) return child;
                       return Container(
-                        height: 250,
-                        color: Colors.white10,
-                        child: const Center(child: CircularProgressIndicator()),
+                        height: 240,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.03)
+                            : Colors.black.withValues(alpha: 0.03),
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 1),
+                        ),
                       );
                     },
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 250,
-                      color: Colors.white10,
-                      child: const Icon(Icons.image_not_supported, size: 50),
-                    ),
                   ),
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
+                  Positioned.fill(
                     child: Container(
-                      height: 80,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
                             Colors.transparent,
-                            Colors.black.withValues(alpha: 0.8),
+                            Theme.of(
+                              context,
+                            ).scaffoldBackgroundColor.withValues(alpha: 0.6),
                           ],
                         ),
                       ),
                     ),
                   ),
-                  Positioned(
-                    bottom: 16,
-                    left: 16,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        exercise.target.toUpperCase(),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    exercise.name.toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.fitness_center,
-                        size: 16,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        exercise.equipment
-                            .split(' ')
-                            .map((w) => w[0].toUpperCase() + w.substring(1))
-                            .join(' '),
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (exercise.instructions.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    const Text(
-                      'TECHNIQUE',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ...exercise.instructions
-                        .take(3)
-                        .map(
-                          (instr) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.only(
-                                    top: 4,
-                                    right: 12,
-                                  ),
-                                  width: 6,
-                                  height: 6,
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    instr,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(alpha: 0.8),
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                  ],
                 ],
               ),
             ),
-          ],
-        ),
+          Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      exercise.target.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    Text(
+                      'TECH INDEX 0${exercise.instructions.length}',
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w900,
+                        color: Theme.of(context).colorScheme.onSurface
+                            .withValues(alpha: isDark ? 0.2 : 0.4),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  exercise.name.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                    height: 1.1,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.layers_outlined,
+                      size: 14,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(
+                        alpha: isDark ? 0.3 : 0.5,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      exercise.equipment.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1,
+                        color: Theme.of(context).colorScheme.onSurface
+                            .withValues(alpha: isDark ? 0.3 : 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+                if (exercise.instructions.isNotEmpty) ...[
+                  const SizedBox(height: 32),
+                  Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: isDark ? Colors.white10 : Colors.black12,
+                  ),
+                  const SizedBox(height: 32),
+                  ...exercise.instructions
+                      .take(3)
+                      .map(
+                        (instr) => Padding(
+                          padding: const EdgeInsets.only(bottom: 20),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '·',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  color: Theme.of(context).colorScheme.primary,
+                                  height: 0.8,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  instr,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: isDark ? 0.6 : 0.8),
+                                    fontWeight: FontWeight.w300,
+                                    height: 1.6,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

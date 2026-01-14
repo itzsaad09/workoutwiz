@@ -18,6 +18,6 @@ void main() {
     );
 
     // Verify that setup screen message is present.
-    expect(find.text('Setup Profile'), findsOneWidget);
+    expect(find.text('WELCOME'), findsOneWidget);
   });
 }

@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:workoutwiz/screens/exercise_list_screen.dart';
@@ -27,89 +26,93 @@ class _MainScreenState extends State<MainScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => _SettingsSheet(),
+      isScrollControlled: true,
+      builder: (context) => const _SettingsSheet(),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       body: Stack(
         children: [
-          // Background Mesh
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topRight,
-                end: Alignment.bottomLeft,
-                colors: Theme.of(context).brightness == Brightness.dark
-                    ? [const Color(0xFF020617), const Color(0xFF0F172A)]
-                    : [const Color(0xFFF8FAFC), const Color(0xFFE2E8F0)],
-              ),
-            ),
+          Positioned.fill(
+            child: Container(color: Theme.of(context).scaffoldBackgroundColor),
           ),
           CustomScrollView(
             slivers: [
               SliverAppBar(
                 floating: true,
                 pinned: true,
-                expandedHeight: 120,
+                expandedHeight: 160,
+                backgroundColor: Colors.transparent,
+                surfaceTintColor: Colors.transparent,
                 flexibleSpace: FlexibleSpaceBar(
                   title: Text(
-                    'WorkoutWiz',
+                    'WORKOUTWIZ',
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurface,
                       fontWeight: FontWeight.w900,
-                      letterSpacing: -1,
+                      letterSpacing: 6,
+                      fontSize: 14,
                     ),
                   ),
-                  centerTitle: false,
-                  titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+                  centerTitle: true,
+                  background: Center(
+                    child: Text(
+                      'Training',
+                      style: TextStyle(
+                        fontSize: 80,
+                        fontWeight: FontWeight.w900,
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Colors.black.withValues(alpha: 0.03),
+                        letterSpacing: -4,
+                      ),
+                    ),
+                  ),
                 ),
                 actions: [
                   IconButton(
                     onPressed: _showSettings,
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.settings_outlined,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                    icon: Icon(
+                      Icons.menu_open_rounded,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                 ],
               ),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 20.0,
-                    vertical: 10,
+                    horizontal: 24,
+                    vertical: 20,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Target your body',
+                        'Performance Categories',
                         style: TextStyle(
                           fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w300,
                           color: Theme.of(context).colorScheme.onSurface,
+                          letterSpacing: -0.5,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Choose a category to start your session',
+                        'Select a specialized body part to begin.',
                         style: TextStyle(
+                          fontSize: 14,
                           color: Theme.of(
                             context,
                           ).colorScheme.onSurface.withValues(alpha: 0.5),
+                          fontWeight: FontWeight.w300,
                         ),
                       ),
                     ],
@@ -121,39 +124,32 @@ class _MainScreenState extends State<MainScreen> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const SliverFillRemaining(
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
                     );
                   } else if (snapshot.hasError) {
-                    return SliverFillRemaining(
-                      child: Center(child: Text('Error: ${snapshot.error}')),
-                    );
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return const SliverFillRemaining(
-                      child: Center(child: Text('No categories found.')),
+                      child: Center(child: Text('ERROR LOAD')),
                     );
                   }
 
-                  final categories = snapshot.data!;
+                  final categories = snapshot.data ?? [];
                   return SliverPadding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
                     sliver: SliverGrid(
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
-                            childAspectRatio: 0.85,
+                            childAspectRatio:
+                                0.85, // Adjusted for image/icon space
                             mainAxisSpacing: 16,
                             crossAxisSpacing: 16,
                           ),
                       delegate: SliverChildBuilderDelegate((context, index) {
                         final category = categories[index];
-                        final displayTitle = category
-                            .split(' ')
-                            .map(
-                              (word) =>
-                                  word[0].toUpperCase() + word.substring(1),
-                            )
-                            .join(' ');
-                        return _CategoryGridCard(
+                        final displayTitle = category.toUpperCase();
+                        return _CategoryCard(
                           title: displayTitle,
                           rawName: category,
                         );
@@ -162,6 +158,7 @@ class _MainScreenState extends State<MainScreen> {
                   );
                 },
               ),
+              const SliverToBoxAdapter(child: SizedBox(height: 40)),
             ],
           ),
         ],
@@ -170,14 +167,63 @@ class _MainScreenState extends State<MainScreen> {
   }
 }
 
-class _CategoryGridCard extends StatelessWidget {
+class _CategoryCard extends StatelessWidget {
   final String title;
   final String rawName;
 
-  const _CategoryGridCard({required this.title, required this.rawName});
+  const _CategoryCard({required this.title, required this.rawName});
+
+  IconData _getCategoryIcon(String rawName) {
+    switch (rawName.toLowerCase()) {
+      case 'back':
+        return Icons.fitness_center;
+      case 'cardio':
+        return Icons.directions_run;
+      case 'chest':
+        return Icons.accessibility;
+      case 'lower arms':
+        return Icons.handyman_outlined;
+      case 'lower legs':
+        return Icons.directions_walk;
+      case 'neck':
+        return Icons.person_pin_circle_outlined;
+      case 'shoulders':
+        return Icons.architecture_outlined;
+      case 'upper arms':
+        return Icons.fitness_center;
+      case 'upper legs':
+        return Icons.nordic_walking;
+      case 'waist':
+        return Icons.accessibility_new;
+      default:
+        return Icons.fitness_center_rounded;
+    }
+  }
+
+  String? _getCategoryAsset(String rawName) {
+    final name = rawName.toLowerCase();
+    // Only back and cardio have assets currently according to list_dir
+    if (name == 'back' ||
+        name == 'cardio' ||
+        name == 'chest' ||
+        name == 'lower arms' ||
+        name == 'lower legs' ||
+        name == 'neck' ||
+        name == 'shoulders' ||
+        name == 'upper arms' ||
+        name == 'upper legs' ||
+        name == 'waist') {
+      return 'assets/$name.png';
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final String? assetPath = _getCategoryAsset(rawName);
+    final IconData icon = _getCategoryIcon(rawName);
+
     return InkWell(
       onTap: () {
         Navigator.push(
@@ -187,111 +233,120 @@ class _CategoryGridCard extends StatelessWidget {
           ),
         );
       },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardTheme.color,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                  Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.black.withValues(alpha: 0.05),
+            width: 0.5,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: assetPath != null
+                  ? Image.asset(
+                      assetPath,
+                      fit: BoxFit.cover,
+                      opacity: AlwaysStoppedAnimation(isDark ? 0.3 : 0.4),
+                      errorBuilder: (context, error, stackTrace) => Center(
+                        child: Icon(
+                          icon,
+                          size: 64,
+                          color: Theme.of(context).colorScheme.primary
+                              .withValues(alpha: isDark ? 0.15 : 0.12),
+                        ),
+                      ),
+                    )
+                  : Icon(
+                      icon,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.primary.withValues(
+                        alpha: isDark ? 0.15 : 0.12,
+                      ),
+                    ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'REGION',
+                        style: TextStyle(
+                          fontSize: 8,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
+                          color: Theme.of(context).colorScheme.primary
+                              .withValues(alpha: isDark ? 0.6 : 0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1,
+                          height: 1.1,
+                          color: Theme.of(context).colorScheme.onSurface,
+                          shadows: assetPath != null
+                              ? [
+                                  Shadow(
+                                    color: Colors.black.withValues(alpha: 0.5),
+                                    blurRadius: 4,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        width: 20,
+                        height: 1.5,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    _getIconForCategory(rawName),
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 28,
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Explore',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
       ),
     );
   }
-
-  IconData _getIconForCategory(String name) {
-    switch (name.toLowerCase()) {
-      case 'back':
-        return Icons.accessibility_new;
-      case 'cardio':
-        return Icons.directions_run;
-      case 'chest':
-        return Icons.fitness_center;
-      case 'lower arms':
-        return Icons.handyman_outlined;
-      case 'lower legs':
-        return Icons.nordic_walking;
-      case 'neck':
-        return Icons.person_outline;
-      case 'shoulders':
-        return Icons.architecture;
-      case 'upper arms':
-        return Icons.sports_gymnastics;
-      case 'upper legs':
-        return Icons.keyboard_double_arrow_up;
-      case 'waist':
-        return Icons.vibration;
-      default:
-        return Icons.bolt;
-    }
-  }
 }
 
 class _SettingsSheet extends StatelessWidget {
+  const _SettingsSheet();
+
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF0F172A)
-            : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(40)),
+        color: isDark ? const Color(0xFF0D1117) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.05),
+          width: 0.5,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -300,49 +355,44 @@ class _SettingsSheet extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Settings',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+              Text(
+                'SYSTEM',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 6,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          const Text(
-            'Appearance',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _ThemeOption(
-                label: 'Light',
-                icon: Icons.light_mode_outlined,
-                mode: ThemeMode.light,
-              ),
-              _ThemeOption(
-                label: 'Dark',
-                icon: Icons.dark_mode_outlined,
-                mode: ThemeMode.dark,
-              ),
-              _ThemeOption(
-                label: 'System',
-                icon: Icons.settings_brightness,
-                mode: ThemeMode.system,
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 20,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 40),
-          const Text(
-            'Profile',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          _buildActionItem(
+            context,
+            icon: Icons.brightness_6_outlined,
+            title: 'Appearance Mode',
+            subtitle: 'Change interface aesthetics',
+            onTap: () {
+              Navigator.pop(context);
+              _showThemePicker(context);
+            },
           ),
-          const SizedBox(height: 16),
-          ListTile(
+          const SizedBox(height: 24),
+          _buildActionItem(
+            context,
+            icon: Icons.person_outline_rounded,
+            title: 'Physical Metrics',
+            subtitle: 'Update your body statistics',
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
@@ -352,16 +402,125 @@ class _SettingsSheet extends StatelessWidget {
                 ),
               );
             },
-            leading: Icon(
-              Icons.person_outline,
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return InkWell(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.03)
+                  : Colors.black.withValues(alpha: 0.03),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              size: 20,
               color: Theme.of(context).colorScheme.primary,
             ),
-            title: const Text(
-              'Edit Personal Info',
-              style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14,
+                    letterSpacing: 0.5,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.5),
+                    fontWeight: FontWeight.w300,
+                  ),
+                ),
+              ],
             ),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            contentPadding: EdgeInsets.zero,
+          ),
+          Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 12,
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.2),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showThemePicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const _ThemePickerSheet(),
+    );
+  }
+}
+
+class _ThemePickerSheet extends StatelessWidget {
+  const _ThemePickerSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.all(40),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0D1117) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.05),
+          width: 0.5,
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'SELECT THEME',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 4,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 32),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _ThemeChip(label: 'LIGHT', mode: ThemeMode.light),
+              _ThemeChip(label: 'DARK', mode: ThemeMode.dark),
+              _ThemeChip(label: 'AUTO', mode: ThemeMode.system),
+            ],
           ),
           const SizedBox(height: 20),
         ],
@@ -370,51 +529,42 @@ class _SettingsSheet extends StatelessWidget {
   }
 }
 
-class _ThemeOption extends StatelessWidget {
+class _ThemeChip extends StatelessWidget {
   final String label;
-  final IconData icon;
   final ThemeMode mode;
 
-  const _ThemeOption({
-    required this.label,
-    required this.icon,
-    required this.mode,
-  });
+  const _ThemeChip({required this.label, required this.mode});
 
   @override
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
     final isSelected = themeService.themeMode == mode;
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: () => themeService.setThemeMode(mode),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Icon(
-              icon,
-              color: isSelected
-                  ? Theme.of(context).colorScheme.onPrimary
-                  : Theme.of(context).colorScheme.primary,
-            ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : (isDark
+                    ? Colors.white.withValues(alpha: 0.03)
+                    : Colors.black.withValues(alpha: 0.03)),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2,
+            color: isSelected
+                ? Colors.white
+                : Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
           ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

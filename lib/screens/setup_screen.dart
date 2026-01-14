@@ -67,45 +67,29 @@ class _SetupScreenState extends State<SetupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       body: Stack(
         children: [
-          // Mesh Gradient Background
+          // Elegant Slate Background
           Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: Theme.of(context).brightness == Brightness.dark
-                      ? [
-                          const Color(0xFF020617),
-                          const Color(0xFF1E1B4B),
-                          const Color(0xFF312E81),
-                        ]
-                      : [
-                          const Color(0xFFF1F5F9),
-                          const Color(0xFFE2E8F0),
-                          const Color(0xFFCBD5E1),
-                        ],
-                ),
-              ),
-            ),
+            child: Container(color: Theme.of(context).scaffoldBackgroundColor),
           ),
+          // Subtle Ambient Glow
           Positioned(
-            top: -100,
-            right: -100,
+            top: -150,
+            right: -50,
             child: Container(
-              width: 300,
-              height: 300,
+              width: 500,
+              height: 500,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: Theme.of(
                   context,
-                ).colorScheme.primary.withValues(alpha: 0.15),
+                ).colorScheme.primary.withValues(alpha: isDark ? 0.03 : 0.05),
               ),
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
                 child: Container(),
               ),
             ),
@@ -113,30 +97,41 @@ class _SetupScreenState extends State<SetupScreen> {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      widget.isEditing ? 'Update Profile' : 'Setup Profile',
+                      widget.isEditing ? 'PROFILE' : 'WELCOME',
                       style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 8,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      widget.isEditing ? 'Refine Metrics' : 'WorkoutWiz',
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w300,
                         color: Theme.of(context).colorScheme.onSurface,
                         letterSpacing: -1,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Optimize your workout experience',
+                      'High-performance tracking for your journey.',
+                      textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 16,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.6),
+                        fontSize: 15,
+                        color: Theme.of(context).colorScheme.onSurface
+                            .withValues(alpha: isDark ? 0.4 : 0.6),
+                        fontWeight: FontWeight.w300,
                       ),
                     ),
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 64),
                     _buildGlassCard(
                       child: Form(
                         key: _formKey,
@@ -145,64 +140,65 @@ class _SetupScreenState extends State<SetupScreen> {
                             _buildInput(
                               label: 'Height',
                               suffix: 'cm',
-                              icon: Icons.height,
                               controller: _heightController,
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 40),
                             _buildInput(
                               label: 'Age',
                               suffix: 'yr',
-                              icon: Icons.cake,
                               controller: _ageController,
                               isInteger: true,
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 40),
                             _buildInput(
                               label: 'Weight',
                               suffix: 'kg',
-                              icon: Icons.monitor_weight_outlined,
                               controller: _weightController,
                             ),
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 64),
                     SizedBox(
                       width: double.infinity,
-                      height: 56,
+                      height: 60,
                       child: ElevatedButton(
                         onPressed: _saveProfile,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Theme.of(
                             context,
                           ).colorScheme.primary,
-                          foregroundColor: Theme.of(
-                            context,
-                          ).colorScheme.onPrimary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
+                          foregroundColor: Colors.white,
                           elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         child: Text(
-                          widget.isEditing ? 'Save Changes' : 'Get Started',
+                          widget.isEditing ? 'UPDATE PROFILE' : 'GET STARTED',
                           style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
                           ),
                         ),
                       ),
                     ),
                     if (widget.isEditing)
-                      TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          'Cancel',
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.5),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 24),
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            'DISCARD CHANGES',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.5,
+                              color: Theme.of(context).colorScheme.onSurface
+                                  .withValues(alpha: isDark ? 0.3 : 0.5),
+                            ),
                           ),
                         ),
                       ),
@@ -217,70 +213,80 @@ class _SetupScreenState extends State<SetupScreen> {
   }
 
   Widget _buildGlassCard({required Widget child}) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardTheme.color,
-            borderRadius: BorderRadius.circular(30),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          ),
-          child: child,
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.05),
+          width: 0.5,
         ),
       ),
+      padding: const EdgeInsets.all(40),
+      child: child,
     );
   }
 
   Widget _buildInput({
     required String label,
     required String suffix,
-    required IconData icon,
     required TextEditingController controller,
     bool isInteger = false,
   }) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          label.toUpperCase(),
           style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 3,
             color: Theme.of(
               context,
-            ).colorScheme.onSurface.withValues(alpha: 0.5),
+            ).colorScheme.onSurface.withValues(alpha: isDark ? 0.3 : 0.5),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         TextFormField(
           controller: controller,
           keyboardType: TextInputType.numberWithOptions(decimal: !isInteger),
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w300,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
           decoration: InputDecoration(
-            prefixIcon: Icon(
-              icon,
-              color: Theme.of(context).colorScheme.primary,
-            ),
             suffixText: suffix,
-            suffixStyle: const TextStyle(fontWeight: FontWeight.bold),
-            contentPadding: const EdgeInsets.symmetric(vertical: 16),
+            suffixStyle: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: isDark ? 0.5 : 0.7),
+            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 8),
             enabledBorder: UnderlineInputBorder(
               borderSide: BorderSide(
-                color: Colors.white.withValues(alpha: 0.1),
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.black.withValues(alpha: 0.1),
               ),
             ),
             focusedBorder: UnderlineInputBorder(
               borderSide: BorderSide(
                 color: Theme.of(context).colorScheme.primary,
+                width: 1,
               ),
             ),
           ),
           validator: (value) {
-            if (value == null || value.isEmpty) return 'Required';
-            if (double.tryParse(value) == null) return 'Invalid';
+            if (value == null || value.isEmpty) return 'REQUIRED';
+            if (double.tryParse(value) == null) return 'INVALID';
             return null;
           },
         ),
