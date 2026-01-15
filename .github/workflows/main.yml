@@ -52,13 +52,11 @@ jobs:
       # --- BUILD COMMANDS ---
       - name: Build Android APK
         run: |
-          # Build fat APK (all ABIs) and split APKs
+          # Build fat APK (all ABIs)
           flutter build apk --release
-          flutter build apk --release --split-per-abi
           
           # Rename for easy identification
-          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/WorkoutWiz-v1.0.${{ github.run_number }}-full.apk
-          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/WorkoutWiz-v1.0.${{ github.run_number }}-arm64.apk
+          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/WorkoutWiz-v1.0.${{ github.run_number }}.apk
 
       - name: Build and Rename iOS IPA
         run: |
