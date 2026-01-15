@@ -4,9 +4,17 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:workoutwiz/models/exercise.dart';
 
 class ApiService {
-  final String baseUrl = dotenv.get('BASE_URL');
-  final String apiKey = dotenv.get('RAPIDAPI_KEY');
-  final String apiHost = dotenv.get('RAPIDAPI_HOST');
+  String get baseUrl {
+    String url = dotenv.env['BASE_URL'] ?? 'https://exercisedb.p.rapidapi.com';
+    if (!url.startsWith('http')) {
+      url = 'https://$url';
+    }
+    return url;
+  }
+
+  String get apiKey => dotenv.env['RAPIDAPI_KEY'] ?? '';
+  String get apiHost =>
+      dotenv.env['RAPIDAPI_HOST'] ?? 'exercisedb.p.rapidapi.com';
 
   Future<List<String>> fetchExerciseCategories() async {
     try {

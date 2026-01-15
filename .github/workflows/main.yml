@@ -30,10 +30,14 @@ jobs:
 
       # --- ENVIRONMENT SETUP ---
       - name: Create .env file
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
+          RAPIDAPI_HOST: ${{ secrets.RAPIDAPI_HOST }}
         run: |
-          echo "BASE_URL=${{ secrets.BASE_URL }}" > .env
-          echo "RAPIDAPI_KEY=${{ secrets.RAPIDAPI_KEY }}" >> .env
-          echo "RAPIDAPI_HOST=${{ secrets.RAPIDAPI_HOST }}" >> .env
+          echo "BASE_URL=${BASE_URL}" > .env
+          echo "RAPIDAPI_KEY=${RAPIDAPI_KEY}" >> .env
+          echo "RAPIDAPI_HOST=${RAPIDAPI_HOST}" >> .env
 
       - name: Get Dependencies
         run: flutter pub get
@@ -48,9 +52,13 @@ jobs:
       # --- BUILD COMMANDS ---
       - name: Build Android APK
         run: |
+          # Build fat APK (all ABIs) and split APKs
+          flutter build apk --release
           flutter build apk --release --split-per-abi
-          cd build/app/outputs/flutter-apk/
-          mv app-arm64-v8a-release.apk WorkoutWiz-v1.0.${{ github.run_number }}.apk
+          
+          # Rename for easy identification
+          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/WorkoutWiz-v1.0.${{ github.run_number }}-full.apk
+          mv build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/WorkoutWiz-v1.0.${{ github.run_number }}-arm64.apk
 
       - name: Build and Rename iOS IPA
         run: |
