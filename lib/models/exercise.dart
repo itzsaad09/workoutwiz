@@ -1,6 +1,7 @@
 class Exercise {
   final String id;
   final String name;
+  final String bodyPart;
   final String target;
   final String equipment;
   final String gifUrl;
@@ -9,6 +10,7 @@ class Exercise {
   Exercise({
     required this.id,
     required this.name,
+    required this.bodyPart,
     required this.target,
     required this.equipment,
     required this.gifUrl,
@@ -19,6 +21,7 @@ class Exercise {
     return Exercise(
       id: json['id'] ?? '',
       name: json['name'] ?? '',
+      bodyPart: json['bodyPart'] ?? '',
       target: json['target'] ?? '',
       equipment: json['equipment'] ?? '',
       gifUrl: json['gifUrl'] ?? '',
