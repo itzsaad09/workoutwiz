@@ -111,10 +111,10 @@ class _ExerciseProfessionalCard extends StatelessWidget {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 32),
+        margin: const EdgeInsets.only(bottom: 24),
         decoration: BoxDecoration(
           color: Theme.of(context).cardTheme.color,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24), // Softer corners
           border: Border.all(
             color: isDark
                 ? Colors.white.withValues(alpha: 0.05)
@@ -125,9 +125,11 @@ class _ExerciseProfessionalCard extends StatelessWidget {
               ? null
               : [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    color: Colors.black.withValues(
+                      alpha: 0.03,
+                    ), // Softer shadow
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
                   ),
                 ],
         ),
@@ -137,163 +139,125 @@ class _ExerciseProfessionalCard extends StatelessWidget {
             if (exercise.gifUrl.isNotEmpty)
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
+                  top: Radius.circular(24),
                 ),
-                child: Stack(
-                  children: [
-                    Hero(
-                      tag: 'exercise_gif_${exercise.id}',
-                      child: Image.network(
-                        exercise.gifUrl,
-                        height: 240,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            height: 240,
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.03)
-                                : Colors.black.withValues(alpha: 0.03),
-                            child: const Center(
-                              child: CircularProgressIndicator(strokeWidth: 1),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Theme.of(
-                                context,
-                              ).scaffoldBackgroundColor.withValues(alpha: 0.6),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: AspectRatio(
+                  aspectRatio: 16 / 10,
+                  child: Stack(
                     children: [
-                      Text(
-                        exercise.target.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2,
-                          color: Theme.of(context).colorScheme.primary,
+                      Hero(
+                        tag: 'exercise_gif_${exercise.id}',
+                        child: Image.network(
+                          exercise.gifUrl,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: isDark
+                                  ? Colors.white.withValues(alpha: 0.03)
+                                  : Colors.black.withValues(alpha: 0.03),
+                            );
+                          },
                         ),
                       ),
-                      Text(
-                        'TECH INDEX 0${exercise.instructions.length}',
-                        style: TextStyle(
-                          fontSize: 8,
-                          fontWeight: FontWeight.w900,
-                          color: Theme.of(context).colorScheme.onSurface
-                              .withValues(alpha: isDark ? 0.2 : 0.4),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    exercise.name.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: -0.5,
-                      height: 1.1,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.layers_outlined,
-                        size: 14,
-                        color: Theme.of(context).colorScheme.onSurface
-                            .withValues(alpha: isDark ? 0.3 : 0.5),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        exercise.equipment.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1,
-                          color: Theme.of(context).colorScheme.onSurface
-                              .withValues(alpha: isDark ? 0.3 : 0.5),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (exercise.instructions.isNotEmpty) ...[
-                    const SizedBox(height: 32),
-                    Divider(
-                      height: 1,
-                      thickness: 0.5,
-                      color: isDark ? Colors.white10 : Colors.black12,
-                    ),
-                    const SizedBox(height: 32),
-                    ...exercise.instructions
-                        .take(3)
-                        .map(
-                          (instr) => Padding(
-                            padding: const EdgeInsets.only(bottom: 20),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '·',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    height: 0.8,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    instr,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withValues(
-                                            alpha: isDark ? 0.6 : 0.8,
-                                          ),
-                                      fontWeight: FontWeight.w300,
-                                      height: 1.6,
-                                    ),
-                                  ),
-                                ),
+                      // Subtle vignette only
+                      Positioned.fill(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.05),
                               ],
                             ),
                           ),
                         ),
-                  ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    exercise.target.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.9),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _capitalizeEachWord(exercise.name),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500, // Less aggressive weight
+                      letterSpacing: -0.5,
+                      height: 1.2,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Simple tags instead of "layers" icon and all caps equipment
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [_MinimalTag(text: exercise.equipment)],
+                  ),
                 ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  String _capitalizeEachWord(String text) {
+    if (text.isEmpty) return text;
+    return text
+        .split(' ')
+        .map((word) {
+          if (word.isEmpty) return word;
+          return word[0].toUpperCase() + word.substring(1).toLowerCase();
+        })
+        .join(' ');
+  }
+}
+
+class _MinimalTag extends StatelessWidget {
+  final String text;
+
+  const _MinimalTag({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.black.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        text, // Keep natural case or capitalize first letter
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
         ),
       ),
     );

@@ -42,8 +42,7 @@ class ApiService {
         throw Exception('Failed to load exercises');
       }
     } catch (e) {
-      print('Error fetching exercises: $e');
-      return [];
+      throw Exception('Error fetching exercises: $e');
     }
   }
 }
