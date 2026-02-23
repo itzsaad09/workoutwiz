@@ -1,10 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:workoutwiz/models/exercise.dart';
+import 'package:workoutwiz/services/api_service.dart';
 
-class ExerciseDetailScreen extends StatelessWidget {
+class ExerciseDetailScreen extends StatefulWidget {
   final Exercise exercise;
 
   const ExerciseDetailScreen({super.key, required this.exercise});
+
+  @override
+  State<ExerciseDetailScreen> createState() => _ExerciseDetailScreenState();
+}
+
+class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
+  final ApiService _apiService = ApiService();
+  late Exercise _currentExercise;
+  bool _isLoadingDetails = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentExercise = widget.exercise;
+    // If the passed exercise is a "shallow" object (no instructions), fetch more details
+    if (_currentExercise.instructions.isEmpty) {
+      _fetchFullDetails();
+    }
+  }
+
+  Future<void> _fetchFullDetails() async {
+    setState(() => _isLoadingDetails = true);
+    try {
+      final fullExercise = await _apiService.fetchExerciseById(
+        _currentExercise.id,
+      );
+      if (mounted) {
+        setState(() {
+          _currentExercise = fullExercise;
+          _isLoadingDetails = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingDetails = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,12 +77,37 @@ class ExerciseDetailScreen extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   Hero(
-                    tag: 'exercise_gif_${exercise.id}',
+                    tag: 'exercise_gif_${_currentExercise.id}',
                     child: Image.network(
-                      exercise.gifUrl,
+                      _currentExercise.gifUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
-                        return const Center(child: Icon(Icons.broken_image));
+                        return Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.broken_image_outlined,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: 0.3),
+                                size: 48,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'VISUAL UNAVAILABLE',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 2,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withValues(alpha: 0.5),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
                       },
                       loadingBuilder: (context, child, loadingProgress) {
                         if (loadingProgress == null) return child;
@@ -88,7 +152,7 @@ class ExerciseDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    exercise.target.toUpperCase(),
+                    _currentExercise.target.toUpperCase(),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -98,10 +162,10 @@ class ExerciseDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _capitalizeEachWord(exercise.name),
+                    _capitalizeEachWord(_currentExercise.name),
                     style: TextStyle(
                       fontSize: 32,
-                      fontWeight: FontWeight.w400, // Lighter, more elegant
+                      fontWeight: FontWeight.w400,
                       letterSpacing: -0.5,
                       height: 1.1,
                       color: Theme.of(context).colorScheme.onSurface,
@@ -112,22 +176,39 @@ class ExerciseDetailScreen extends StatelessWidget {
                     spacing: 12,
                     runSpacing: 12,
                     children: [
-                      _ElegantTag(text: exercise.bodyPart),
-                      _ElegantTag(text: exercise.equipment),
+                      _ElegantTag(text: _currentExercise.bodyPart),
+                      _ElegantTag(text: _currentExercise.equipment),
                     ],
                   ),
                   const SizedBox(height: 48),
-                  Text(
-                    'Technique',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: -0.5,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Technique',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: -0.5,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      if (_isLoadingDetails)
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withValues(alpha: 0.5),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 24),
-                  if (exercise.instructions.isEmpty)
+                  if (_currentExercise.instructions.isEmpty &&
+                      !_isLoadingDetails)
                     Text(
                       'No specific instructions available.',
                       style: TextStyle(
@@ -139,7 +220,10 @@ class ExerciseDetailScreen extends StatelessWidget {
                       ),
                     )
                   else
-                    ..._buildInstructions(context, exercise.instructions),
+                    ..._buildInstructions(
+                      context,
+                      _currentExercise.instructions,
+                    ),
                   const SizedBox(height: 40),
                 ],
               ),

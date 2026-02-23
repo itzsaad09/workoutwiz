@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:workoutwiz/models/user_profile.dart';
 import 'package:workoutwiz/services/theme_service.dart';
+import 'package:workoutwiz/providers/workout_provider.dart';
 import 'package:workoutwiz/screens/setup_screen.dart';
 import 'package:workoutwiz/screens/main_screen.dart';
 
@@ -16,6 +17,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(create: (_) => UserProfileProvider()),
+        ChangeNotifierProvider(create: (_) => WorkoutProvider()),
       ],
       child: const WorkoutWizApp(),
     ),
