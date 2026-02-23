@@ -11,7 +11,7 @@ jobs:
     name: Build & Release
     runs-on: macos-latest
     permissions:
-      contents: write 
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,25 +19,22 @@ jobs:
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: "temurin"
+          java-version: "17"
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-          architecture: x64
+          channel: "stable"
 
       # --- ENVIRONMENT SETUP ---
       - name: Create .env file
         env:
           BASE_URL: ${{ secrets.BASE_URL }}
-          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
-          RAPIDAPI_HOST: ${{ secrets.RAPIDAPI_HOST }}
+          API_KEY: ${{ secrets.API_KEY }}
         run: |
           echo "BASE_URL=${BASE_URL}" > .env
-          echo "RAPIDAPI_KEY=${RAPIDAPI_KEY}" >> .env
-          echo "RAPIDAPI_HOST=${RAPIDAPI_HOST}" >> .env
+          echo "API_KEY=${API_KEY}" >> .env
 
       - name: Get Dependencies
         run: flutter pub get
@@ -54,7 +51,7 @@ jobs:
         run: |
           # Build fat APK (all ABIs)
           flutter build apk --release
-          
+
           # Rename for easy identification
           mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/WorkoutWiz-v1.0.${{ github.run_number }}.apk
 
