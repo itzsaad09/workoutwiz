@@ -7,7 +7,6 @@ import 'package:workoutwiz/screens/workout_plan_screen.dart';
 import 'package:workoutwiz/services/api_service.dart';
 import 'package:workoutwiz/models/workout_plan.dart';
 import 'package:shimmer/shimmer.dart';
-import 'dart:ui';
 
 // Category visual config — icon + accent colour
 const Map<String, _CatMeta> _catMeta = {
@@ -81,6 +80,7 @@ class _MainScreenState extends State<MainScreen> {
         _instructionController.clear();
         await _loadSavedPlan();
 
+        if (!mounted) return;
         Navigator.push(
           context,
           MaterialPageRoute(

@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:workoutwiz/services/database_service.dart';
 import 'package:shimmer/shimmer.dart';
@@ -83,10 +82,10 @@ class _CachedGifState extends State<CachedGif> {
       return Shimmer.fromColors(
         baseColor: Theme.of(
           context,
-        ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         highlightColor: Theme.of(
           context,
-        ).colorScheme.surfaceContainerHighest.withOpacity(0.1),
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
         child: Container(
           color: Colors.white,
           width: double.infinity,
@@ -109,7 +108,7 @@ class _CachedGifState extends State<CachedGif> {
         return Center(
           child: Icon(
             Icons.broken_image_outlined,
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
           ),
         );
       },
@@ -118,10 +117,10 @@ class _CachedGifState extends State<CachedGif> {
         return Shimmer.fromColors(
           baseColor: Theme.of(
             context,
-          ).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
           highlightColor: Theme.of(
             context,
-          ).colorScheme.surfaceContainerHighest.withOpacity(0.1),
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
           child: Container(
             color: Colors.white,
             width: double.infinity,
