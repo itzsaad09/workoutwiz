@@ -9,7 +9,7 @@ name: "WorkoutWiz CI/CD"
 jobs:
   build:
     name: Build & Release
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
@@ -53,19 +53,11 @@ jobs:
           # Rename for easy identification
           mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/WorkoutWiz-v1.0.${{ github.run_number }}.apk
 
-      - name: Build and Rename iOS IPA
-        run: |
-          flutter build ios --release --no-codesign
-          cd build/ios/iphoneos
-          mkdir Payload
-          cp -r Runner.app Payload/
-          zip -r WorkoutWiz-v1.0.${{ github.run_number }}.ipa Payload
-
       # --- RELEASE ---
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/app/outputs/flutter-apk/WorkoutWiz-*.apk,build/ios/iphoneos/WorkoutWiz-*.ipa"
+          artifacts: "build/app/outputs/flutter-apk/WorkoutWiz-*.apk"
           tag: v1.0.${{ github.run_number }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
