@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "992873124993",
+    "project_id": "workout-wizard-887fe",
+    "storage_bucket": "workout-wizard-887fe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:992873124993:android:bd163aff10d2fc85522980",
+        "android_client_info": {
+          "package_name": "com.example.workoutwiz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBbH_0dF1f-iK1cX6FIJANU6MwFO9rHdpk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

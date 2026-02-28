@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:workoutwiz/services/database_service.dart';
+import 'package:workoutwiz/services/theme_service.dart';
+import 'package:workoutwiz/screens/category_exercises_screen.dart';
 import 'package:workoutwiz/screens/workout_plan_screen.dart';
 import 'package:workoutwiz/services/api_service.dart';
-import 'package:workoutwiz/services/theme_service.dart';
-import 'package:workoutwiz/screens/setup_screen.dart';
-import 'package:workoutwiz/screens/category_exercises_screen.dart';
-import 'package:workoutwiz/providers/workout_provider.dart';
+import 'package:workoutwiz/models/workout_plan.dart';
+import 'package:shimmer/shimmer.dart';
 import 'dart:ui';
 
 // Category visual config — icon + accent colour
@@ -36,49 +37,49 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
+  final TextEditingController _instructionController = TextEditingController();
   final ApiService _apiService = ApiService();
+  final DatabaseService _db = DatabaseService();
+  bool _isGenerating = false;
+  WorkoutPlanResponse? _savedPlan;
 
-  void _showSettings() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => const _SettingsSheet(),
-    );
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedPlan();
   }
 
-  bool _isGeneratingWeekly = false;
+  Future<void> _loadSavedPlan() async {
+    final plan = await _db.getLatestWorkoutPlan();
+    if (mounted) {
+      setState(() => _savedPlan = plan);
+    }
+  }
 
-  Future<void> _generateWeeklyPlan() async {
-    setState(() => _isGeneratingWeekly = true);
-    try {
-      final List<String> muscles = await _apiService.fetchExerciseCategories();
-      if (!mounted) return;
+  @override
+  void dispose() {
+    _instructionController.dispose();
+    super.dispose();
+  }
 
-      final result = await showDialog<Map<String, dynamic>>(
-        context: context,
-        builder: (context) => _WeeklyPlanDetailsPicker(muscles: muscles),
+  Future<void> _generateAIPlan() async {
+    if (_instructionController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please describe your goal first')),
       );
+      return;
+    }
 
-      if (result == null) {
-        setState(() => _isGeneratingWeekly = false);
-        return;
-      }
+    setState(() => _isGenerating = true);
 
-      final String selectedMuscle = result['muscle'];
-      final int selectedDuration = result['duration'];
-
-      final response = await _apiService.generateWeeklyWorkoutPlan(
-        targetMuscle: selectedMuscle,
-        durationMinutes: selectedDuration,
+    try {
+      final response = await _apiService.generateWorkoutPlanWithAI(
+        instruction: _instructionController.text.trim(),
       );
 
       if (mounted) {
-        // Save to Shared Preferences via Provider
-        Provider.of<WorkoutProvider>(
-          context,
-          listen: false,
-        ).saveWeeklyPlan(response);
+        _instructionController.clear();
+        await _loadSavedPlan();
 
         Navigator.push(
           context,
@@ -89,15 +90,22 @@ class _MainScreenState extends State<MainScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to generate weekly plan: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
-      if (mounted) {
-        setState(() => _isGeneratingWeekly = false);
-      }
+      if (mounted) setState(() => _isGenerating = false);
     }
+  }
+
+  void _showSettings() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => const _SettingsSheet(),
+    );
   }
 
   @override
@@ -144,7 +152,10 @@ class _MainScreenState extends State<MainScreen> {
                 ),
                 actions: [
                   IconButton(
-                    onPressed: _showSettings,
+                    onPressed: () {
+                      _loadSavedPlan();
+                      _showSettings();
+                    },
                     icon: Icon(
                       Icons.menu_open_rounded,
                       color: Theme.of(
@@ -155,95 +166,228 @@ class _MainScreenState extends State<MainScreen> {
                   const SizedBox(width: 12),
                 ],
               ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'PRO PLAN GENERATOR',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2,
-                          color: Theme.of(context).colorScheme.primary,
+              if (_savedPlan != null)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                WorkoutPlanScreen(response: _savedPlan!),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 20,
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      _WeeklyPlanCard(
-                        onTap: _generateWeeklyPlan,
-                        isGenerating: _isGeneratingWeekly,
-                      ),
-                      if (context.watch<WorkoutProvider>().weeklyPlan != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 12),
-                          child: SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => WorkoutPlanScreen(
-                                      response: context
-                                          .read<WorkoutProvider>()
-                                          .weeklyPlan!,
-                                    ),
-                                  ),
-                                );
-                              },
-                              icon: const Icon(
-                                Icons.visibility_rounded,
-                                size: 18,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Theme.of(context).colorScheme.primary,
+                              Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.8),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                              label: const Text(
-                                'VIEW SAVED PLAN',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                side: BorderSide(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.primary.withValues(alpha: 0.3),
-                                ),
+                              child: const Icon(
+                                Icons.calendar_month_rounded,
+                                color: Colors.white,
+                                size: 24,
                               ),
                             ),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'ACTIVE PROTOCOL',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 2,
+                                    ),
+                                  ),
+                                  Text(
+                                    _savedPlan!.data.targetMuscle.toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: -0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              // ── Instruction / Goal Box ─────────────────────
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                  child: Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.03)
+                          : Colors.black.withValues(alpha: 0.03),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(
+                        color: (isDark ? Colors.white : Colors.black)
+                            .withValues(alpha: 0.08),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'CUSTOM PROTOCOL BUILDER',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
-                      const SizedBox(height: 32),
-                      Text(
-                        'Weekly Pro Protocol',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.onSurface,
-                          letterSpacing: -0.5,
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _instructionController,
+                          maxLines: 3,
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontWeight: FontWeight.w400,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Describe your training goal...',
+                            hintStyle: TextStyle(
+                              fontSize: 14,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.3),
+                            ),
+                            fillColor: isDark
+                                ? Colors.black.withValues(alpha: 0.2)
+                                : Colors.white.withValues(alpha: 0.5),
+                            filled: true,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.all(16),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Our AI engine generates a 7-day high-performance training schedule optimized for your goals. Every protocol includes scientific rest intervals and pro-level techniques.',
-                        style: TextStyle(
-                          fontSize: 14,
-                          height: 1.5,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.5),
-                          fontWeight: FontWeight.w400,
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _isGenerating ? null : _generateAIPlan,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: _isGenerating
+                                ? Shimmer.fromColors(
+                                    baseColor: Colors.white.withValues(
+                                      alpha: 0.6,
+                                    ),
+                                    highlightColor: Colors.white,
+                                    child: const Text(
+                                      'BUILDING PROTOCOL...',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 12,
+                                        letterSpacing: 2,
+                                      ),
+                                    ),
+                                  )
+                                : const Text(
+                                    'GENERATE PERSONALIZED PLAN',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 12,
+                                      letterSpacing: 2,
+                                    ),
+                                  ),
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                size: 16,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'PLEASE INCLUDE: Mention your age, height, weight, and target goal for a precise plan.',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: Theme.of(context).colorScheme.primary
+                                        .withValues(alpha: 0.9),
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -371,22 +515,6 @@ class _SettingsSheet extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
               _showThemePicker(context);
-            },
-          ),
-          const SizedBox(height: 24),
-          _buildActionItem(
-            context,
-            icon: Icons.person_outline_rounded,
-            title: 'Physical Metrics',
-            subtitle: 'Update your body statistics',
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SetupScreen(isEditing: true),
-                ),
-              );
             },
           ),
           const SizedBox(height: 32),
@@ -549,389 +677,6 @@ class _ThemeChip extends StatelessWidget {
                 : Theme.of(
                     context,
                   ).colorScheme.onSurface.withValues(alpha: 0.5),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _WeeklyPlanDetailsPicker extends StatefulWidget {
-  final List<String> muscles;
-
-  const _WeeklyPlanDetailsPicker({required this.muscles});
-
-  @override
-  State<_WeeklyPlanDetailsPicker> createState() =>
-      _WeeklyPlanDetailsPickerState();
-}
-
-class _WeeklyPlanDetailsPickerState extends State<_WeeklyPlanDetailsPicker> {
-  String? _selectedMuscle;
-  double _duration = 30; // Default 30 minutes
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-      child: Center(
-        child: Container(
-          width: MediaQuery.of(context).size.width * 0.9,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardTheme.color,
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.black.withValues(alpha: 0.1),
-              width: 1,
-            ),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header
-                Center(
-                  child: Column(
-                    children: [
-                      Text(
-                        'PLAN YOUR WEEK',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2.5,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Customize Strategy',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w300,
-                          color: Theme.of(context).colorScheme.onSurface,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // Muscle Selection Label
-                Text(
-                  '1. TARGET MUSCLE GROUP',
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.2,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Muscle List (Small Grid or Horizontal List maybe?)
-                // Let's use a Wrap for chips style selection
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: widget.muscles.map((muscle) {
-                    final bool isSelected = _selectedMuscle == muscle;
-                    return GestureDetector(
-                      onTap: () => setState(() => _selectedMuscle = muscle),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? Theme.of(context).colorScheme.primary
-                              : (isDark
-                                    ? Colors.white.withValues(alpha: 0.05)
-                                    : Colors.black.withValues(alpha: 0.05)),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: isSelected
-                                ? Colors.transparent
-                                : (isDark
-                                      ? Colors.white.withValues(alpha: 0.1)
-                                      : Colors.black.withValues(alpha: 0.1)),
-                          ),
-                        ),
-                        child: Text(
-                          muscle.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: isSelected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: isSelected
-                                ? Colors.white
-                                : Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-
-                const SizedBox(height: 32),
-
-                // Duration Label
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '2. SESSION DURATION',
-                      style: TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    Text(
-                      '${_duration.round()} MINS',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
-
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    trackHeight: 6,
-                    thumbShape: const RoundSliderThumbShape(
-                      enabledThumbRadius: 10,
-                    ),
-                    overlayShape: const RoundSliderOverlayShape(
-                      overlayRadius: 20,
-                    ),
-                  ),
-                  child: Slider(
-                    value: _duration,
-                    min: 15,
-                    max: 120,
-                    divisions: 21, // increments of 5 mins roughly
-                    onChanged: (val) => setState(() => _duration = val),
-                  ),
-                ),
-
-                const SizedBox(height: 40),
-
-                // Generate Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _selectedMuscle == null
-                        ? null
-                        : () {
-                            Navigator.pop(context, {
-                              'muscle': _selectedMuscle,
-                              'duration': _duration.round(),
-                            });
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'GENERATE PROFESSIONAL PLAN',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Center(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      'Cancel',
-                      style: TextStyle(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.4),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _WeeklyPlanCard extends StatelessWidget {
-  final VoidCallback onTap;
-  final bool isGenerating;
-
-  const _WeeklyPlanCard({required this.onTap, required this.isGenerating});
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).colorScheme.primary;
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.1),
-            blurRadius: 30,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: isGenerating ? null : onTap,
-            child: Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: isDark
-                      ? [const Color(0xFF1E293B), const Color(0xFF0F172A)]
-                      : [Colors.white, const Color(0xFFF1F5F9)],
-                ),
-                border: Border.all(
-                  color: primaryColor.withValues(alpha: 0.15),
-                  width: 1.5,
-                ),
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: Stack(
-                children: [
-                  // Decorative background watermark
-                  Positioned(
-                    right: -20,
-                    bottom: -20,
-                    child: Icon(
-                      Icons.calendar_today_rounded,
-                      size: 140,
-                      color: primaryColor.withValues(alpha: 0.05),
-                    ),
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: primaryColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                'AI-POWERED',
-                                style: TextStyle(
-                                  fontSize: 8,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 2,
-                                  color: primaryColor,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              isGenerating
-                                  ? 'OPTIMIZING ENGINE...'
-                                  : 'Weekly Pro Plan',
-                              style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w800,
-                                color: Theme.of(context).colorScheme.onSurface,
-                                letterSpacing: -1,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              context.watch<WorkoutProvider>().weeklyPlan !=
-                                      null
-                                  ? 'Your AI strategy is ready to view.'
-                                  : 'Customized 7-day high-performance strategy.',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withValues(alpha: 0.6),
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      if (isGenerating)
-                        const SizedBox(
-                          width: 32,
-                          height: 32,
-                          child: CircularProgressIndicator(strokeWidth: 3),
-                        )
-                      else
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: primaryColor,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: primaryColor.withValues(alpha: 0.4),
-                                blurRadius: 15,
-                                offset: const Offset(0, 5),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.bolt_rounded,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
           ),
         ),
       ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:workoutwiz/models/exercise.dart';
 import 'package:workoutwiz/services/api_service.dart';
+import 'package:workoutwiz/widgets/cached_gif.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ExerciseDetailScreen extends StatefulWidget {
   final Exercise exercise;
@@ -78,48 +80,10 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                 children: [
                   Hero(
                     tag: 'exercise_gif_${_currentExercise.id}',
-                    child: Image.network(
-                      _currentExercise.gifUrl,
+                    child: CachedGif(
+                      exerciseId: _currentExercise.id,
+                      gifUrl: _currentExercise.gifUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.broken_image_outlined,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.primary.withValues(alpha: 0.3),
-                                size: 48,
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'VISUAL UNAVAILABLE',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 2,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.primary.withValues(alpha: 0.5),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Center(
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.5),
-                          ),
-                        );
-                      },
                     ),
                   ),
                   // Gradient Overlay for text readability
@@ -181,34 +145,72 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
                     ],
                   ),
                   const SizedBox(height: 48),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Technique',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: -0.5,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                      if (_isLoadingDetails)
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.5),
-                          ),
-                        ),
-                    ],
+                  Text(
+                    'Technique',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: -0.5,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                   const SizedBox(height: 24),
-                  if (_currentExercise.instructions.isEmpty &&
-                      !_isLoadingDetails)
+                  if (_isLoadingDetails)
+                    ...List.generate(
+                      4,
+                      (index) => Padding(
+                        padding: const EdgeInsets.only(bottom: 24.0),
+                        child: Shimmer.fromColors(
+                          baseColor: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest
+                              .withValues(alpha: 0.3),
+                          highlightColor: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest
+                              .withValues(alpha: 0.1),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 28,
+                                height: 28,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      height: 14,
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      height: 14,
+                                      width: 200,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (_currentExercise.instructions.isEmpty)
                     Text(
                       'No specific instructions available.',
                       style: TextStyle(

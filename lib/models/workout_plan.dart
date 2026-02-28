@@ -61,11 +61,13 @@ class WorkoutData {
 class DailyWorkout {
   final int day;
   final String dayName;
+  final String dailyFocus;
   final List<PlannedExercise> exercises;
 
   DailyWorkout({
     required this.day,
     required this.dayName,
+    required this.dailyFocus,
     required this.exercises,
   });
 
@@ -73,6 +75,7 @@ class DailyWorkout {
     return DailyWorkout(
       day: json['day'] ?? 0,
       dayName: json['day_name'] ?? '',
+      dailyFocus: json['daily_focus'] ?? '',
       exercises: (json['exercises'] as List)
           .map((i) => PlannedExercise.fromJson(i))
           .toList(),
@@ -83,6 +86,7 @@ class DailyWorkout {
     return {
       'day': day,
       'day_name': dayName,
+      'daily_focus': dailyFocus,
       'exercises': exercises.map((i) => i.toJson()).toList(),
     };
   }
@@ -94,6 +98,7 @@ class PlannedExercise {
   final int sets;
   final String reps;
   final int restSeconds;
+  final String formCue;
   final Exercise details;
 
   PlannedExercise({
@@ -102,6 +107,7 @@ class PlannedExercise {
     required this.sets,
     required this.reps,
     required this.restSeconds,
+    required this.formCue,
     required this.details,
   });
 
@@ -112,6 +118,7 @@ class PlannedExercise {
       sets: json['sets'] ?? 0,
       reps: json['reps'] ?? '',
       restSeconds: json['rest_seconds'] ?? 0,
+      formCue: json['form_cue'] ?? '',
       details: Exercise.fromJson(json['details']),
     );
   }
@@ -123,6 +130,7 @@ class PlannedExercise {
       'sets': sets,
       'reps': reps,
       'rest_seconds': restSeconds,
+      'form_cue': formCue,
       'details': details.toJson(),
     };
   }

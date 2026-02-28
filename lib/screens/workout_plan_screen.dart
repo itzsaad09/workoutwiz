@@ -1,7 +1,8 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:workoutwiz/models/workout_plan.dart';
 import 'package:workoutwiz/screens/exercise_detail_screen.dart';
+import 'package:workoutwiz/widgets/cached_gif.dart';
 
 class WorkoutPlanScreen extends StatelessWidget {
   final WorkoutPlanResponse response;
@@ -115,14 +116,43 @@ class _DayWorkoutView extends StatelessWidget {
     return ListView.builder(
       padding: EdgeInsets.fromLTRB(
         24,
-        MediaQuery.of(context).padding.top +
-            120, // More padding for dual title + tabs
+        MediaQuery.of(context).padding.top + 120,
         24,
         24,
       ),
-      itemCount: day.exercises.length,
+      itemCount: day.exercises.length + 1,
       itemBuilder: (context, index) {
-        final planned = day.exercises[index];
+        if (index == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'DAILY FOCUS',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.6),
+                  ),
+                ),
+                Text(
+                  day.dailyFocus.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -0.5,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        final planned = day.exercises[index - 1];
         return _PlannedExerciseCard(planned: planned);
       },
     );
@@ -172,21 +202,10 @@ class _PlannedExerciseCard extends StatelessWidget {
                   aspectRatio: 21 / 9, // Wider aspect ratio for plan view
                   child: Hero(
                     tag: 'exercise_gif_${exercise.id}',
-                    child: Image.network(
-                      exercise.gifUrl,
-                      width: double.infinity,
+                    child: CachedGif(
+                      exerciseId: exercise.id,
+                      gifUrl: exercise.gifUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Center(
-                          child: Icon(
-                            Icons.broken_image_outlined,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.2),
-                            size: 32,
-                          ),
-                        );
-                      },
                     ),
                   ),
                 ),
@@ -272,6 +291,47 @@ class _PlannedExerciseCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (planned.formCue.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withValues(alpha: 0.1),
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.lightbulb_outline_rounded,
+                              size: 14,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                planned.formCue,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  height: 1.4,
+                                  color: Theme.of(context).colorScheme.onSurface
+                                      .withValues(alpha: 0.7),
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

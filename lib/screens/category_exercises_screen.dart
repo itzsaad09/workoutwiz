@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:workoutwiz/models/exercise.dart';
 import 'package:workoutwiz/services/api_service.dart';
 import 'package:workoutwiz/screens/exercise_detail_screen.dart';
+import 'package:workoutwiz/widgets/cached_gif.dart';
+import 'package:shimmer/shimmer.dart';
 
 // Metadata for each body-part category icons.
 const Map<String, IconData> _categoryIcons = {
@@ -237,10 +239,36 @@ class _CategoryExercisesScreenState extends State<CategoryExercisesScreen> {
             ),
           ),
 
-          // ── Body ───────────────────────────────────────────
           if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+            SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 14,
+                  crossAxisSpacing: 14,
+                  childAspectRatio: 0.72,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => Shimmer.fromColors(
+                    baseColor: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest
+                        .withValues(alpha: 0.3),
+                    highlightColor: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest
+                        .withValues(alpha: 0.1),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+                  childCount: 6,
+                ),
+              ),
             )
           else if (_error != null)
             SliverFillRemaining(
@@ -395,33 +423,10 @@ class _ExerciseCard extends StatelessWidget {
                     // GIF image
                     Hero(
                       tag: 'exercise_gif_${exercise.id}',
-                      child: Image.network(
-                        exercise.gifUrl,
+                      child: CachedGif(
+                        exerciseId: exercise.id,
+                        gifUrl: exercise.gifUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Center(
-                          child: Icon(
-                            Icons.broken_image_outlined,
-                            color: accent.withValues(alpha: 0.3),
-                            size: 36,
-                          ),
-                        ),
-                        loadingBuilder: (_, child, progress) {
-                          if (progress == null) return child;
-                          return Center(
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                value: progress.expectedTotalBytes != null
-                                    ? progress.cumulativeBytesLoaded /
-                                          progress.expectedTotalBytes!
-                                    : null,
-                                color: accent.withValues(alpha: 0.5),
-                              ),
-                            ),
-                          );
-                        },
                       ),
                     ),
                     // Top-right equipment badge
@@ -459,10 +464,13 @@ class _ExerciseCard extends StatelessWidget {
             ),
 
             // Info section
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+            Container(
+              height: 72, // Fixed height to align all cards perfectly
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment
+                    .center, // Center text vertically in fixed box
                 children: [
                   if (exercise.target.isNotEmpty)
                     Text(
@@ -482,7 +490,7 @@ class _ExerciseCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      height: 1.3,
+                      height: 1.2,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                     maxLines: 2,

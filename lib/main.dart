@@ -4,8 +4,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:workoutwiz/models/user_profile.dart';
 import 'package:workoutwiz/services/theme_service.dart';
-import 'package:workoutwiz/providers/workout_provider.dart';
-import 'package:workoutwiz/screens/setup_screen.dart';
 import 'package:workoutwiz/screens/main_screen.dart';
 
 void main() async {
@@ -17,7 +15,6 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeService()),
         ChangeNotifierProvider(create: (_) => UserProfileProvider()),
-        ChangeNotifierProvider(create: (_) => WorkoutProvider()),
       ],
       child: const WorkoutWizApp(),
     ),
@@ -30,7 +27,6 @@ class WorkoutWizApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeService = Provider.of<ThemeService>(context);
-    final profileProvider = Provider.of<UserProfileProvider>(context);
 
     // Elegant Crystal Slate Dark Theme
     final darkTheme = ThemeData(
@@ -122,9 +118,7 @@ class WorkoutWizApp extends StatelessWidget {
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeService.themeMode,
-      home: profileProvider.isSetupComplete
-          ? const MainScreen()
-          : const SetupScreen(),
+      home: const MainScreen(),
     );
   }
 }
