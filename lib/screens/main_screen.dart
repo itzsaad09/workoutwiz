@@ -46,6 +46,16 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _loadSavedPlan();
+    _prewarmAssets();
+  }
+
+  Future<void> _prewarmAssets() async {
+    try {
+      await _apiService.fetchExercisesByBodyPart('waist', limit: 1);
+      debugPrint('Asset pre-warm complete.');
+    } catch (e) {
+      debugPrint('Asset pre-warm failed: $e');
+    }
   }
 
   Future<void> _loadSavedPlan() async {

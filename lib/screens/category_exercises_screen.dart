@@ -275,7 +275,11 @@ class _CategoryExercisesScreenState extends State<CategoryExercisesScreen> {
             )
           else if (_error != null)
             SliverFillRemaining(
-              child: _ErrorState(accent: accent, onRetry: _loadExercises),
+              child: _ErrorState(
+                accent: accent,
+                onRetry: _loadExercises,
+                message: _error,
+              ),
             )
           else if (_exercises.isEmpty)
             SliverFillRemaining(child: _EmptyState(accent: accent))
@@ -516,8 +520,13 @@ class _ExerciseCard extends StatelessWidget {
 class _ErrorState extends StatelessWidget {
   final Color accent;
   final VoidCallback onRetry;
+  final String? message;
 
-  const _ErrorState({required this.accent, required this.onRetry});
+  const _ErrorState({
+    required this.accent,
+    required this.onRetry,
+    this.message,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -528,13 +537,13 @@ class _ErrorState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.wifi_off_rounded,
+              Icons.error_outline_rounded,
               size: 48,
               color: accent.withValues(alpha: 0.4),
             ),
             const SizedBox(height: 16),
             Text(
-              'Could not load exercises',
+              'Oops! Something went wrong',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -543,7 +552,7 @@ class _ErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Check your connection and try again.',
+              message ?? 'Please check your local exercise data.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
