@@ -89,6 +89,9 @@ class _CategoryExercisesScreenState extends State<CategoryExercisesScreen> {
           _offset = results.length;
           _hasMore = results.length == _pageSize;
           _isLoading = false;
+          if (results.isEmpty) {
+            _error = "No exercises found for this category.";
+          }
         });
       }
     } catch (e) {

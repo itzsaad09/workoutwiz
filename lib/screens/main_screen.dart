@@ -295,7 +295,8 @@ class _MainScreenState extends State<MainScreen> {
                             fontWeight: FontWeight.w400,
                           ),
                           decoration: InputDecoration(
-                            hintText: 'Describe your training goal...',
+                            hintText:
+                                'Example: I am 25, 6ft, 185lbs. I want to build muscle in my chest and train 4 days a week...',
                             hintStyle: TextStyle(
                               fontSize: 14,
                               color: Theme.of(
@@ -373,7 +374,7 @@ class _MainScreenState extends State<MainScreen> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'PLEASE INCLUDE: Mention your age, height, weight, and target goal for a precise plan.',
+                                  'STAY SPECIFIC: Mention your age, height, weight, gender, and available equipment for a precise plan.',
                                   style: TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
@@ -437,7 +438,7 @@ class _MainScreenState extends State<MainScreen> {
                     crossAxisCount: 2,
                     mainAxisSpacing: 12,
                     crossAxisSpacing: 12,
-                    childAspectRatio: 1.55,
+                    childAspectRatio: 1.05,
                   ),
                   delegate: SliverChildBuilderDelegate((context, index) {
                     final categories = _catMeta.keys.toList();

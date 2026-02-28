@@ -25,10 +25,18 @@ class ApiService {
     int offset = 0,
   }) async {
     try {
-      final List<Exercise> allExercises = await _loadExercisesFromCsv();
-      final filtered = allExercises
-          .where((e) => e.bodyPart.toLowerCase() == bodyPart.toLowerCase())
+      final results = await _loadExercisesFromCsv();
+      final filtered = results
+          .where(
+            (e) =>
+                e.bodyPart.toLowerCase().trim() ==
+                bodyPart.toLowerCase().trim(),
+          )
           .toList();
+
+      debugPrint(
+        'Loaded ${results.length} total, filtered ${filtered.length} for $bodyPart',
+      );
 
       if (filtered.isNotEmpty) {
         final start = offset.clamp(0, filtered.length);
@@ -47,24 +55,31 @@ class ApiService {
 
     try {
       final csvString = await rootBundle.loadString('assets/exercises.csv');
+      debugPrint('CSV loaded. Bytes: ${csvString.length}');
       final List<List<dynamic>> rows = const CsvToListConverter().convert(
         csvString,
       );
 
       if (rows.isEmpty) return [];
 
-      // Assuming first row is header
       final headers = rows.first
-          .map((e) => e.toString().toLowerCase())
+          .map((e) => e.toString().toLowerCase().trim().replaceAll('"', ''))
           .toList();
       final List<Exercise> exercises = [];
 
       for (int i = 1; i < rows.length; i++) {
         final row = rows[i];
+        if (row.isEmpty) continue;
+
         final Map<String, dynamic> mapped = {};
         for (int j = 0; j < headers.length; j++) {
           if (j < row.length) {
-            mapped[headers[j]] = row[j];
+            String value = row[j].toString().trim();
+            // Remove literal outer quotes if the parser didn't strip them
+            if (value.startsWith('"') && value.endsWith('"')) {
+              value = value.substring(1, value.length - 1);
+            }
+            mapped[headers[j]] = value;
           }
         }
         exercises.add(Exercise.fromJson(mapped));
