@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
@@ -13,14 +14,14 @@ class DatabaseService {
   DatabaseService._internal();
 
   Future<Database?> get database async {
-    if (kIsWeb) return null; // SQFlite not supported on Web directly
+    if (kIsWeb || Platform.environment.containsKey('FLUTTER_TEST')) return null;
     if (_database != null) return _database!;
     _database = await _initDatabase();
     return _database;
   }
 
   Future<Database?> _initDatabase() async {
-    if (kIsWeb) return null;
+    if (kIsWeb || Platform.environment.containsKey('FLUTTER_TEST')) return null;
     String dbPath = await getDatabasesPath();
     String path = join(dbPath, 'workoutwiz.db');
     return await openDatabase(

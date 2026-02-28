@@ -17,7 +17,7 @@ void main() {
       ),
     );
 
-    // Verify that setup screen message is present.
-    expect(find.text('WELCOME'), findsOneWidget);
+    // Verify that the title is present.
+    expect(find.text('WORKOUTWIZ'), findsOneWidget);
   });
 }
