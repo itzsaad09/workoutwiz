@@ -37,6 +37,9 @@ jobs:
       - name: Get Dependencies
         run: flutter pub get
 
+      - name: Clean Build
+        run: flutter clean
+
       # --- QUALITY CHECK ---
       - name: Analyze Project
         run: flutter analyze

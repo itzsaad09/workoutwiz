@@ -116,7 +116,7 @@ class _DayWorkoutView extends StatelessWidget {
     return ListView.builder(
       padding: EdgeInsets.fromLTRB(
         24,
-        MediaQuery.of(context).padding.top + 120,
+        MediaQuery.of(context).padding.top + 24,
         24,
         24,
       ),

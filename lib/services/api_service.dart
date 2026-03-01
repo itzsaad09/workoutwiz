@@ -11,7 +11,7 @@ import 'package:workoutwiz/services/database_service.dart';
 class ApiService {
   final DatabaseService _db = DatabaseService();
   String? get geminiKey {
-    final key = dotenv.env['GEMINI_API_KEY'] ?? dotenv.env['API_KEY'];
+    final key = dotenv.env['API_KEY'];
     if (key == null || key == 'YOUR_API_KEY_HERE' || key.isEmpty) return null;
     return key;
   }
@@ -112,7 +112,7 @@ class ApiService {
     try {
       final List<Exercise> allExercises = await _loadExercisesFromCsv();
       final model = GenerativeModel(
-        model: 'gemini-1.5-flash',
+        model: 'gemini-2.5-flash',
         apiKey: geminiKey!,
       );
 
